@@ -1,6 +1,6 @@
 # Приложение заметок
 
-Android-приложение с отображением графика котировок, созданное для демонстрации работы с Jetpack Compose и отрисовки кастомного UI.
+Android-приложение для управления заметками с полным стеком современных технологий. Реализовано с акцентом на чистую архитектуру, реактивный UI.
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/57ba3c8d-6552-4292-9a06-6a1c892ebf03" width="300" />
@@ -12,16 +12,27 @@ Android-приложение с отображением графика коти
 ## Стек
 - Kotlin
 - Jetpack Compose
-- Canvas (Custom Drawing)  
-- Custom View / Composable
-- StateFlow 
-- ViewModel
+- Clean Architecture  
+- MVVM + StateFlow
+- Single Activity + Navigation Compose 
+- Hilt
+- Room
+- Coil
+- Kotlin Coroutines
+- Flow
+- Splash Screen API
+- Internal Storage
+- 
+
 
 ---
 
 ## Назначение проекта
-Проект создан для демонстрации работы:
-- Jetpack Compose — построение всего интерфейса на декларативном фреймворке.
-- Custom Drawing — отрисовка графиков  через Canvas API.
-- Реактивное управление состоянием — StateFlow + ViewModel 
+Проект, демонстрирующий полный цикл разработки современного Android-приложения:
+- Clean Architecture с четким разделением слоев
+- MVVM с ViewModel и реактивными StateFlow/SharedFlow
+- Внедрение зависимостей через Hilt
+- Jetpack Compose с навигацией Navigation Compose
+- Локальное хранение в Room с корутинами
+- 
 
