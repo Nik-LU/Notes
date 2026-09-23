@@ -11,8 +11,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NotesDao {
 
-    @Transaction
-    @Query("SELECT * FROM notes ORDER BY updatedAt DESC")
+    @Query(
+        """
+    SELECT * FROM notes
+    WHERE isDraft = 0
+    ORDER BY updatedAt DESC
+    """
+    )
     fun getAllNotes(): Flow<List<NoteWithContentDbModel>>
 
     @Transaction
@@ -22,14 +27,27 @@ interface NotesDao {
     @Transaction
     @Query(
         """
-        SELECT DISTINCT notes.* FROM notes JOIN content
-        ON notes.id == content.noteId
-        WHERE title LIKE '%' || :query || '%'
-        OR content LIKE '%' || :query || '%' 
-        ORDER BY updatedAt DESC 
-        """
+    SELECT DISTINCT notes.* FROM notes JOIN content
+    ON notes.id = content.noteId
+    WHERE notes.isDraft = 0
+     AND (
+        notes.title LIKE '%' || :query || '%'
+        OR content.content LIKE '%' || :query || '%'
+     )
+     ORDER BY notes.updatedAt DESC
+    """
     )
     fun searchNotes(query: String): Flow<List<NoteWithContentDbModel>>
+
+    @Transaction
+    @Query(
+        """
+    SELECT * FROM notes
+    WHERE isDraft = 1
+    LIMIT 1
+    """
+    )
+    fun observeDraft(): Flow<NoteWithContentDbModel?>
 
     @Transaction
     @Query("DELETE FROM notes WHERE id == :noteId")
@@ -51,10 +69,12 @@ interface NotesDao {
     suspend fun addNoteWithContent(
         noteDbModel: NoteDbModel,
         content: List<ContentItem>
-    ) {
+    ): Int {
         val noteId = addNote(noteDbModel).toInt()
         val contentItems = content.toContentItemDbModels(noteId)
         addNoteContent(contentItems)
+
+        return noteId
     }
 
     @Transaction
@@ -66,4 +86,6 @@ interface NotesDao {
         deleteNoteContent(noteDbModel.id)
         addNoteContent(content)
     }
+
+
 }

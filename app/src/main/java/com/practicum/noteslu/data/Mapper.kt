@@ -5,7 +5,7 @@ import com.practicum.noteslu.domain.Note
 import kotlinx.serialization.json.Json
 
 fun Note.toDbModel(): NoteDbModel {
-    return NoteDbModel(id, title, updatedAt, isPinned)
+    return NoteDbModel(id, title, updatedAt, isPinned, isDraft)
 }
 
 fun List<ContentItem>.toContentItemDbModels(noteId: Int): List<ContentItemDbModel> {
@@ -14,15 +14,16 @@ fun List<ContentItem>.toContentItemDbModels(noteId: Int): List<ContentItemDbMode
             is ContentItem.Image -> {
                 ContentItemDbModel(
                     noteId = noteId,
-                    contentType = ContentType.IMAGE ,
+                    contentType = ContentType.IMAGE,
                     content = contentItem.url,
                     order = index
                 )
             }
+
             is ContentItem.Text -> {
                 ContentItemDbModel(
                     noteId = noteId,
-                    contentType =ContentType.TEXT ,
+                    contentType = ContentType.TEXT,
                     content = contentItem.content,
                     order = index
                 )
@@ -34,10 +35,11 @@ fun List<ContentItem>.toContentItemDbModels(noteId: Int): List<ContentItemDbMode
 
 fun List<ContentItemDbModel>.toContentItems(): List<ContentItem> {
     return map { contentItem ->
-        when(contentItem.contentType){
+        when (contentItem.contentType) {
             ContentType.TEXT -> {
                 ContentItem.Text(content = contentItem.content)
             }
+
             ContentType.IMAGE -> {
                 ContentItem.Image(url = contentItem.content)
             }
@@ -52,7 +54,8 @@ fun NoteWithContentDbModel.toEntity(): Note {
         title = noteDbModel.title,
         content = content.toContentItems(),
         updatedAt = noteDbModel.updatedAt,
-        isPinned = noteDbModel.isPinned
+        isPinned = noteDbModel.isPinned,
+        isDraft = noteDbModel.isDraft
     )
 }
 

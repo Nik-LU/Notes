@@ -16,6 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -24,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -53,6 +56,20 @@ fun EditNoteScreen(
     val state = viewModel.state.collectAsState()
     val currentState = state.value
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                EditNoteViewModel.EditNoteEvent.DraftConflict -> {
+                    snackbarHostState.showSnackbar(
+                        message = "Сначала заверши или удали текущий черновик"
+                    )
+                }
+            }
+        }
+    }
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -70,6 +87,9 @@ fun EditNoteScreen(
         is EditNoteViewModel.EditNoteState.Editing -> {
             Scaffold(
                 modifier = modifier,
+                snackbarHost = {
+                    SnackbarHost(hostState = snackbarHostState)
+                },
                 topBar = {
                     TopAppBar(
                         title = {

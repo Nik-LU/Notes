@@ -9,5 +9,6 @@ data class NoteDbModel(
     val id: Int,
     val title: String,
     val updatedAt: Long,
-    val isPinned: Boolean
+    val isPinned: Boolean,
+    val isDraft: Boolean
 )

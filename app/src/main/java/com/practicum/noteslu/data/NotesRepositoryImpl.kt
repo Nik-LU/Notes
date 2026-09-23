@@ -20,7 +20,7 @@ class NotesRepositoryImpl @Inject constructor(
         updateAt: Long
     ) {
         val processedContent = content.processForStorage()
-        val noteDbModel = NoteDbModel(0, title, updateAt, isPinned)
+        val noteDbModel = NoteDbModel(0, title, updateAt, isPinned, false)
         notesDao.addNoteWithContent(noteDbModel, processedContent)
     }
 
@@ -60,6 +60,35 @@ class NotesRepositoryImpl @Inject constructor(
 
     override fun getAllNotes(): Flow<List<Note>> {
         return notesDao.getAllNotes().map { it.toEntities() }
+    }
+
+    override fun observeDraft(): Flow<Note?> {
+        return notesDao.observeDraft().map { draft ->
+            draft?.toEntity()
+        }
+    }
+
+    override suspend fun publishDraft(note: Note) {
+        editNote(note.copy(isDraft = false))
+    }
+
+    override suspend fun deleteDraft(noteId: Int) {
+        deleteNote(noteId)
+    }
+
+    override suspend fun saveDraft(note: Note): Note {
+        return if (note.id == 0) {
+            val processedContent = note.content.processForStorage()
+            val noteDbModel = note.copy(content = processedContent).toDbModel()
+            val newId = notesDao.addNoteWithContent(
+                noteDbModel = noteDbModel,
+                content = processedContent
+            )
+            note.copy(id = newId, content = processedContent)
+        } else {
+            editNote(note)
+            notesDao.getNote(note.id).toEntity()
+        }
     }
 
     override suspend fun getNote(noteId: Int): Note {

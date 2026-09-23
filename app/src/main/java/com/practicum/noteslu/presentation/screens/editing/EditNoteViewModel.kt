@@ -9,14 +9,19 @@ import com.practicum.noteslu.domain.DeleteNotesUseCase
 import com.practicum.noteslu.domain.EditNoteUseCase
 import com.practicum.noteslu.domain.GetNoteUseCase
 import com.practicum.noteslu.domain.Note
+import com.practicum.noteslu.domain.ObserveDraftUseCase
+import com.practicum.noteslu.domain.SaveDraftUseCase
 import com.practicum.noteslu.presentation.screens.creation.CreateNoteViewModel.CreateNoteCommand
 import com.practicum.noteslu.presentation.screens.creation.CreateNoteViewModel.CreateNoteState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,6 +30,8 @@ class EditNoteViewModel @AssistedInject constructor(
     private val editNoteUseCase: EditNoteUseCase,
     private val getNoteUseCase: GetNoteUseCase,
     private val deleteNoteUseCase: DeleteNotesUseCase,
+    private val observeDraftUseCase: ObserveDraftUseCase,
+    private val saveDraftUseCase: SaveDraftUseCase,
     @Assisted("noteId") private val noteId: Int
 ) : ViewModel() {
 
@@ -32,6 +39,8 @@ class EditNoteViewModel @AssistedInject constructor(
         EditNoteState.Initial
     )
     val state = _state.asStateFlow()
+    private val _events = MutableSharedFlow<EditNoteEvent>()
+    val events = _events.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -51,7 +60,46 @@ class EditNoteViewModel @AssistedInject constructor(
         when (command) {
 
             EditNoteCommand.Back -> {
-                _state.update { EditNoteState.Finished }
+                val editingState = _state.value as? EditNoteState.Editing ?: return
+
+                viewModelScope.launch {
+                    val note = editingState.note
+
+                    val hasMeaningfulContent = note.title.isNotBlank() ||
+                            note.content.any { contentItem ->
+                                when (contentItem) {
+                                    is ContentItem.Text -> contentItem.content.isNotBlank()
+                                    is ContentItem.Image -> true
+                                }
+                            }
+
+                    if (editingState.isSaveEnabled) {
+                        val noteToSave = note.copy(
+                            content = note.content.filter { contentItem ->
+                                contentItem !is ContentItem.Text || contentItem.content.isNotBlank()
+                            }
+                        )
+
+                        editNoteUseCase(noteToSave)
+                        _state.value = EditNoteState.Finished
+                        return@launch
+                    }
+
+                    if (hasMeaningfulContent) {
+                        val currentDraft = observeDraftUseCase().first()
+
+                        if (currentDraft != null && currentDraft.id != note.id) {
+                            _events.emit(EditNoteEvent.DraftConflict)
+                            return@launch
+                        }
+
+                        saveDraftUseCase(note)
+                        _state.value = EditNoteState.Finished
+                        return@launch
+                    }
+
+                    _state.value = EditNoteState.Finished
+                }
             }
 
             is EditNoteCommand.InputContent -> {
@@ -203,6 +251,10 @@ class EditNoteViewModel @AssistedInject constructor(
         }
 
         data object Finished : EditNoteState
+    }
+
+    sealed interface EditNoteEvent {
+        data object DraftConflict : EditNoteEvent
     }
 
 }

@@ -23,4 +23,12 @@ interface NotesRepository {
 
     suspend fun switchPinnedStatus(noteId: Int)
 
+    fun observeDraft(): Flow<Note?>
+
+    suspend fun saveDraft(note: Note): Note
+
+    suspend fun publishDraft(note: Note)
+
+    suspend fun deleteDraft(noteId: Int)
+
 }

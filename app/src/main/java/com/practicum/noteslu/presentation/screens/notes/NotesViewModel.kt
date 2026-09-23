@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.noteslu.domain.GetAllNotesUseCase
 import com.practicum.noteslu.domain.Note
+import com.practicum.noteslu.domain.ObserveDraftUseCase
 import com.practicum.noteslu.domain.SearchNotesUseCase
 import com.practicum.noteslu.domain.SwitchPinnedStatusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +24,8 @@ import javax.inject.Inject
 class NotesViewModel @Inject constructor(
     private val getAllNotesUseCase: GetAllNotesUseCase,
     private val searchNotesUseCase: SearchNotesUseCase,
-    private val switchPinnedStatusUseCase: SwitchPinnedStatusUseCase
+    private val switchPinnedStatusUseCase: SwitchPinnedStatusUseCase,
+    private val observeDraftUseCase: ObserveDraftUseCase
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -47,6 +49,14 @@ class NotesViewModel @Inject constructor(
                 val pinnedNotes = notes.filter { it.isPinned }
                 val otherNotes = notes.filter { !it.isPinned }
                 _state.update { it.copy(pinnedNotes = pinnedNotes, otherNotes = otherNotes) }
+            }
+            .launchIn(viewModelScope)
+
+        observeDraftUseCase()
+            .onEach { draft ->
+                _state.update { state ->
+                    state.copy(draft = draft)
+                }
             }
             .launchIn(viewModelScope)
     }
@@ -75,6 +85,7 @@ class NotesViewModel @Inject constructor(
     }
 
     data class NotesScreenState(
+        val draft: Note? = null,
         val query: String = "",
         val pinnedNotes: List<Note> = listOf(),
         val otherNotes: List<Note> = listOf()

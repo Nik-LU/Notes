@@ -27,6 +27,9 @@ fun NavGraph() {
                 },
                 onAddNoteClick = {
                     navController.navigate(Screen.CreateNote.route)
+                },
+                onDraftClick = {
+                    navController.navigate(Screen.CreateNote.route)
                 }
             )
         }

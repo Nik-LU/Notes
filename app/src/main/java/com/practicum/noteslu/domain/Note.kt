@@ -5,5 +5,6 @@ data class Note(
     val title: String,
     val content: List<ContentItem>,
     val updatedAt: Long,
-    val isPinned: Boolean
+    val isPinned: Boolean,
+    val isDraft: Boolean
 )

@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.practicum.noteslu.R
 import com.practicum.noteslu.domain.ContentItem
@@ -56,10 +57,11 @@ fun NotesScreen(
     modifier: Modifier = Modifier,
     viewModel: NotesViewModel = hiltViewModel(),
     onNoteClick: (Note) -> Unit,
-    onAddNoteClick: () -> Unit
+    onAddNoteClick: () -> Unit,
+    onDraftClick: () -> Unit
 ) {
 
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -102,6 +104,35 @@ fun NotesScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+
+            state.draft?.let { draft ->
+                item {
+                    Subtitle(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        text = "Черновик"
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                item {
+                    NoteCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp),
+                        note = draft,
+                        onNoteClick = {
+                            onDraftClick()
+                        },
+                        onLongClick = {},
+                        backgroundColor = PinnedNotesColors.first()
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+
             item {
                 Subtitle(
                     modifier = Modifier.padding(horizontal = 24.dp),
